@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>net.iphonweb.hadoop</groupId>
+	<artifactId>hdfs-over-webdav</artifactId>
+	<version>0.20.1-SNAPSHOT</version>
+
+	<name>HDFS over WebDAV</name>
+	<description>Exposing HDFS over WebDAV for client file access.</description>
+	<url>http://www.hadoop.iponweb.net/Home/hdfs-over-webdav</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.6</maven.compiler.source>
+		<maven.compiler.target>1.6</maven.compiler.target>
+		<mainClass>org.apache.hadoop.fs.webdav.WebdavServer</mainClass>
+
+ 		<hadoop.version>0.20.2-cdh3u1</hadoop.version>
+	</properties>
+
+<!--
+	<licenses>
+		<license>
+			<name>GNU General Public License, Version 2</name>
+			<url>http://www.gnu.org/licenses/old-licenses/gpl-2.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+ -->
+	<scm>
+		<url>https://github.com/huyphan/HDFS-over-Webdav</url>
+		<connection>scm:git:git://github.com/huyphan/HDFS-over-Webdav.git</connection>
+	</scm>
+	<issueManagement>
+		<system>github</system>
+		<url>https://github.com/huyphan/HDFS-over-Webdav/issues</url>
+	</issueManagement>
+<!--
+	<distributionManagement>
+		<repository>
+			<id>iponweb</id>
+			<uniqueVersion>true</uniqueVersion>
+			<url>scp://www.hadoop.iponweb.net/Home/hdfs-over-webdav/maven2</url>
+			<downloadUrl>http://www.hadoop.iponweb.net/Home/hdfs-over-webdav/maven2/</downloadUrl>
+		</repository>
+	</distributionManagement>
+ -->
+
+	<repositories>
+		<repository>
+			<id>cloudera</id>
+			<name>Cloudera Repository</name>
+			<url>https://repository.cloudera.com/content/groups/public/</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.jackrabbit</groupId>
+			<artifactId>jackrabbit-jcr-server</artifactId>
+ 			<version>2.2.7</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.jcr</groupId>
+			<artifactId>jcr</artifactId>
+ 			<version>2.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-core</artifactId>
+			<version>${hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-httpclient</groupId>
+					<artifactId>commons-httpclient</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.tomcat</groupId>
+					<artifactId>jasper</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- Logging -->
+		<dependency>
+		    <groupId>org.slf4j</groupId>
+		    <artifactId>slf4j-api</artifactId>
+ 		    <version>1.5.11</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.slf4j</groupId>
+		    <artifactId>slf4j-log4j12</artifactId>
+ 		    <version>1.5.11</version>
+		    <scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.14</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Testing -->
+<!--
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>[4.8.2,5.0.0)</version>
+			<scope>test</scope>
+		</dependency>
+ -->
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- use specified java version -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+					<showWarnings>true</showWarnings>
+				</configuration>
+			</plugin>
+
+			<!-- assemble running 'mvn package' -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<!-- ignore log4j.properties from the hadoop-core jar -->
+					<descriptor>jar-with-dependencies-without-log4j-config.xml</descriptor>
+<!-- 					<descriptorRefs> -->
+<!-- 						<descriptorRef>jar-with-dependencies</descriptorRef> -->
+<!-- 					</descriptorRefs> -->
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<mainClass>${mainClass}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

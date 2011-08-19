@@ -19,6 +19,7 @@
 package org.apache.hadoop.fs.webdav;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.io.*;
 import java.util.*;
 
@@ -29,14 +30,18 @@ import javax.servlet.ServletException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UnixUserGroupInformation;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.fs.permission.AccessControlException;
-import org.apache.jackrabbit.server.AbstractWebdavServlet;
+import org.apache.jackrabbit.webdav.server.AbstractWebdavServlet;
 import org.apache.jackrabbit.webdav.*;
 import org.apache.jackrabbit.webdav.simple.LocatorFactoryImpl;
 import org.apache.jackrabbit.webdav.simple.ResourceConfig;
 import org.apache.jackrabbit.webdav.simple.ResourceFactoryImpl;
+import org.apache.tika.detect.Detector;
+import org.apache.tika.mime.MimeTypeException;
+import org.apache.tika.mime.MimeTypesFactory;
 import org.mortbay.jetty.webapp.WebAppContext;
+import org.w3c.dom.Document;
 
 
 public class WebdavServlet extends AbstractWebdavServlet {
@@ -72,6 +77,13 @@ public class WebdavServlet extends AbstractWebdavServlet {
      * for filtering the resources displayed.
      */
     public static final String INIT_PARAM_RESOURCE_CONFIG = "resource-config";
+
+    /**
+     * Name of the parameter that specifies the servlet resource path of
+     * a custom &lt;mime-info/&gt; configuration file. The default setting
+     * is to use the MIME media type database included in Apache Tika.
+     */
+    public static final String INIT_PARAM_MIME_INFO = "mime-info";
 
     /**
      * Servlet context attribute used to store the path prefix instead of
@@ -173,11 +185,10 @@ public class WebdavServlet extends AbstractWebdavServlet {
 
         String configParam = getInitParameter(INIT_PARAM_RESOURCE_CONFIG);
         if (configParam != null) {
-            try {
-                config = new ResourceConfig();
-                config.parse(getServletContext().getResource(configParam));
+			try {
+				getResourceConfig().parse(getServletContext().getResource(configParam));
             } catch (MalformedURLException e) {
-                log.debug("Unable to build resource filter provider.");
+            	throw new ServletException("Unable to build resource filter provider.", e);
             }
         }
     }
@@ -229,7 +240,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
     @Override
     public DavResourceFactory getResourceFactory() {
         if (resourceFactory == null) {
-            resourceFactory = new FSDavResourceFactory(getResourceConfig(),
+            resourceFactory = new FSDavResourceFactory(null,
                                                        getConf(getServletContext()));
         }
         return resourceFactory;
@@ -290,21 +301,50 @@ public class WebdavServlet extends AbstractWebdavServlet {
      * Returns the resource configuration to be applied
      *
      * @return the resource configuration.
+     * @throws ServletException if the database is invalid or can not be read
      */
-    private ResourceConfig getResourceConfig() {
-        // fallback if no config present
+    private ResourceConfig getResourceConfig() throws ServletException {
         if (config == null) {
-            config = new ResourceConfig();
+            config = new ResourceConfig(getDetector());
         }
         return config;
     }
 
     /**
-     * Returns the caches {@link Configuration} if a {@link Configuration} is 
+     * Reads and returns the configured &lt;mime-info/&gt; database.
+     *
+     * @see #INIT_PARAM_MIME_INFO
+     * @return MIME media type database
+     * @throws ServletException if the database is invalid or can not be read
+     */
+    private Detector getDetector() throws ServletException {
+        URL url;
+		String mimeInfo = getInitParameter(INIT_PARAM_MIME_INFO);
+		if (mimeInfo != null) {
+			try {
+				url = getServletContext().getResource(mimeInfo);
+			} catch (MalformedURLException e) {
+				throw new ServletException("Invalid " + INIT_PARAM_MIME_INFO + " configuration setting: " + mimeInfo, e);
+			}
+		} else {
+			url = MimeTypesFactory.class.getResource("tika-mimetypes.xml");
+		}
+
+		try {
+			return MimeTypesFactory.create(url);
+		} catch (MimeTypeException e) {
+			throw new ServletException("Invalid MIME media type database: " + url, e);
+		} catch (IOException e) {
+			throw new ServletException("Unable to read MIME media type database: " + url, e);
+		}
+    }
+
+    /**
+     * Returns the caches {@link Configuration} if a {@link Configuration} is
      * found in the {@link javax.servlet.ServletContext} it is simply returned,
-     * otherwise, a new {@link Configuration} is created, and then all the init 
-     * parameters found in the {@link javax.servlet.ServletContext} are added to 
-     * the {@link Configuration} (the created {@link Configuration} is then 
+     * otherwise, a new {@link Configuration} is created, and then all the init
+     * parameters found in the {@link javax.servlet.ServletContext} are added to
+     * the {@link Configuration} (the created {@link Configuration} is then
      * saved into the {@link javax.servlet.ServletContext}).
      *
      * @param application is the ServletContext whose init parameters
@@ -333,8 +373,13 @@ public class WebdavServlet extends AbstractWebdavServlet {
             List<String> userRoles = userRealm.getUserRoles(currentUserName);
             currentUserRoles = userRoles;
 
-            UnixUserGroupInformation ugi = new UnixUserGroupInformation(currentUserName, userRoles.toArray(new String[0]));
-            UnixUserGroupInformation.saveToConf(conf, UnixUserGroupInformation.UGI_PROPERTY_NAME, ugi);
+            try {
+            	// cloudera's user mgmt see http://archive.cloudera.com/cdh/3/hadoop/Secure_Impersonation.pdf
+				UserGroupInformation ugi = UserGroupInformation.createProxyUser(currentUserName, UserGroupInformation.getLoginUser());
+				conf.set("hadoop.job.ugi", ugi.toString());
+			} catch (IOException e) {
+				log.error("Login failed", e);
+			}
         }
         return conf;
     }
@@ -346,7 +391,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
      * @param config
      */
     public static void setConf(Configuration config) {
-        hadoopConfig = config;   
+        hadoopConfig = config;
     }
 
     protected void service(HttpServletRequest request,
@@ -371,7 +416,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
             String name = (String) e2.nextElement();
             log.info("|| " + name + ": ");
         }
-        
+
         log.info("HEADERS: ");
         Enumeration e6 = request.getHeaderNames();
         while (e6.hasMoreElements()) {
@@ -407,8 +452,8 @@ public class WebdavServlet extends AbstractWebdavServlet {
 
                 WebdavResponse webdavResponse = new WebdavResponseImpl(response);
                 webdavResponse.sendMultiStatus(ms);
-            } else new WebdavResponseImpl(response).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); 
-        }
+            } else new WebdavResponseImpl(response).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
 
         log.info("\\--------------------------------------------------");
     }

@@ -22,7 +22,7 @@ import org.apache.jackrabbit.webdav.security.CurrentUserPrivilegeSetProperty;
 import org.apache.jackrabbit.webdav.security.Privilege;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.permission.FsAction;
-import org.apache.hadoop.security.UnixUserGroupInformation;
+import org.apache.hadoop.security.UserGroupInformation;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 
 public class UtilsHelper {
 
-    public static CurrentUserPrivilegeSetProperty getCurrentUserPrivilegeSetProperty(FileStatus fstat, UnixUserGroupInformation ugi) {
+    public static CurrentUserPrivilegeSetProperty getCurrentUserPrivilegeSetProperty(FileStatus fstat, UserGroupInformation ugi) {
 
         List<Privilege> list = new ArrayList<Privilege>();
 

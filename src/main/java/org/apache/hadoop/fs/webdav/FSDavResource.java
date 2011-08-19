@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Date;
 import java.util.TimeZone;
@@ -35,12 +36,10 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.permission.AccessControlException;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.hadoop.security.UnixUserGroupInformation;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.jackrabbit.webdav.*;
-import org.apache.jackrabbit.webdav.jcr.ItemResourceConstants;
 import org.apache.jackrabbit.webdav.security.*;
 import org.apache.jackrabbit.webdav.io.InputContext;
 import org.apache.jackrabbit.webdav.io.OutputContext;
@@ -55,22 +54,20 @@ import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.apache.jackrabbit.webdav.property.DavPropertySet;
 import org.apache.jackrabbit.webdav.property.DefaultDavProperty;
+import org.apache.jackrabbit.webdav.property.PropEntry;
 import org.apache.jackrabbit.webdav.property.ResourceType;
 import org.apache.jackrabbit.webdav.simple.ResourceConfig;
-
-import javax.security.auth.login.LoginException;
-import javax.jcr.RepositoryException;
 
 public class FSDavResource implements DavResource {
 
     private static final Log LOG = LogFactory.getLog(FSDavResource.class);
 
-    private static final String COMPLIANCE_CLASS = 
+    private static final String COMPLIANCE_CLASS =
         DavCompliance.concatComplianceClasses(new String[] {DavCompliance._2_});
 
     //We support compliance level 1, and the listed methods. PROPFIND, PROPPATCH
-    //are not supported for now. 
-    private static final String SUPPORTED_METHODS 
+    //are not supported for now.
+    private static final String SUPPORTED_METHODS
         = "OPTIONS, GET, HEAD, POST, TRACE, MKCOL, COPY, PUT, DELETE, MOVE, PROPFIND";
 
     private FSDavResourceFactory factory;
@@ -87,7 +84,7 @@ public class FSDavResource implements DavResource {
     private boolean inited = false;
 
     /**
-     * This only indicates that the DavResource is to be created as a file 
+     * This only indicates that the DavResource is to be created as a file
      * or directory
      * @see isCollection
      */
@@ -257,7 +254,7 @@ public class FSDavResource implements DavResource {
         }
 
         if (0 == buffer.length()) {
-            buffer.insert(0, "/");            
+            buffer.insert(0, "/");
         }
 
         LOG.info("HREF: " + buffer.toString());
@@ -284,7 +281,7 @@ public class FSDavResource implements DavResource {
                 for (FileStatus s:statuses) {
                     Path p = s.getPath();
                     LOG.info("MEMBER: " + p.toString());
-                    DavResourceLocator resourceLocator 
+                    DavResourceLocator resourceLocator
                         = locator.getFactory().createResourceLocator(locator.getPrefix(),
                                                                      locator.getWorkspacePath(),
                                                                      p.toString(),
@@ -336,15 +333,16 @@ public class FSDavResource implements DavResource {
             properties.add(new DefaultDavProperty(SecurityConstants.OWNER, fstat.getOwner()));
             properties.add(new DefaultDavProperty(SecurityConstants.GROUP, fstat.getGroup()));
 
-            UnixUserGroupInformation ugi = UnixUserGroupInformation.readFromConf(this.conf,
-                                                                                 UnixUserGroupInformation.UGI_PROPERTY_NAME);
+            UserGroupInformation ugi = UserGroupInformation.getLoginUser();
+            String ugiStr = conf.get("hadoop.job.ugi");
+            if (ugiStr != null) {
+            	ugi = UserGroupInformation.createProxyUser(ugiStr, UserGroupInformation.getLoginUser());
+            }
             CurrentUserPrivilegeSetProperty currentUserPrivilegeSetProperty = UtilsHelper.getCurrentUserPrivilegeSetProperty(fstat, ugi);
             properties.add(new DefaultDavProperty(SecurityConstants.CURRENT_USER_PRIVILEGE_SET,
                                                   currentUserPrivilegeSetProperty.getValue()));
         } catch (IOException ex) {
             LOG.warn(StringUtils.stringifyException(ex));
-        } catch (LoginException e) {
-            LOG.warn(StringUtils.stringifyException(e));
         }
         // set (or reset) fundamental properties
         if (getDisplayName() != null) {
