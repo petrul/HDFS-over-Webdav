@@ -93,7 +93,6 @@ public class FSDavResource implements DavResource {
     public FSDavResource(FSDavResourceFactory factory,
                          DavResourceLocator locator,
                          DavSession session,
-                         ResourceConfig resourceConfig,
                          Configuration conf,
                          boolean isCollectionRequest) throws IOException {
 
@@ -113,10 +112,9 @@ public class FSDavResource implements DavResource {
     public FSDavResource(FSDavResourceFactory factory,
                          DavResourceLocator locator,
                          DavSession session,
-                         ResourceConfig resourceConfig,
                          Configuration conf) throws IOException {
 
-        this(factory, locator,session, resourceConfig, conf, false);
+        this(factory, locator,session, conf, false);
     }
 
     public String getComplianceClass() {

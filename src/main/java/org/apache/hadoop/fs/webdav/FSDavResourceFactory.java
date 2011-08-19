@@ -37,12 +37,9 @@ public class FSDavResourceFactory implements DavResourceFactory {
 
     private static final Log LOG = LogFactory.getLog(FSDavResourceFactory.class);
 
-    private final ResourceConfig resourceConfig;
     private final Configuration conf;
 
-    public FSDavResourceFactory(ResourceConfig resourceConfig,
-                                Configuration conf) {
-        this.resourceConfig = resourceConfig;
+    public FSDavResourceFactory(Configuration conf) {
         this.conf = conf;
     }
 
@@ -50,7 +47,7 @@ public class FSDavResourceFactory implements DavResourceFactory {
                                       DavSession session) throws DavException {
 
         try {
-            return new FSDavResource(this, locator, session, resourceConfig, conf);
+            return new FSDavResource(this, locator, session, conf);
         } catch (IOException ex) {
             throw new DavException(DavServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
         }
@@ -64,7 +61,6 @@ public class FSDavResourceFactory implements DavResourceFactory {
             return new FSDavResource(this,
                                      locator,
                                      request.getDavSession(),
-                                     resourceConfig,
                                      conf,
                                      DavMethods.isCreateCollectionRequest(request));
         } catch (IOException ex) {

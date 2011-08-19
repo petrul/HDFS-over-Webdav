@@ -240,8 +240,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
     @Override
     public DavResourceFactory getResourceFactory() {
         if (resourceFactory == null) {
-            resourceFactory = new FSDavResourceFactory(null,
-                                                       getConf(getServletContext()));
+            resourceFactory = new FSDavResourceFactory(getConf(getServletContext()));
         }
         return resourceFactory;
     }
