@@ -4,10 +4,10 @@
 
   <property name="hadoop.dir" value="/home/user/hadoop"/>
 
-  <property name="src.dir" value="${basedir}/src/java"/>
+  <property name="src.dir" value="${basedir}/src/main/java"/>
   <property name="lib.dir" value="${basedir}/lib"/>
 
-  <property name="build.dir" value="${basedir}/build"/>
+  <property name="build.dir" value="${basedir}/target"/>
   <property name="build.classes" value="${build.dir}/classes"/>
   <property name="webdav.lib.jar" value="${build.dir}/hdfs_webdav.jar"/>
 
@@ -43,7 +43,7 @@
     <jar jarfile="${webdav.lib.jar}">
       <fileset dir="${build.classes}"/>
       <manifest>
-        <attribute name="Main-Class" 
+        <attribute name="Main-Class"
                    value="org/apache/hadoop/fs/webdav/WebdavServer"/>
       </manifest>
     </jar>
