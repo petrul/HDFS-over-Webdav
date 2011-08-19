@@ -23,9 +23,7 @@ import org.mortbay.jetty.security.HashUserRealm;
 import java.util.*;
 import java.io.IOException;
 
-
 public class WebdavHashUserRealm extends HashUserRealm {
-
     public WebdavHashUserRealm() {
         super();
     }
@@ -36,22 +34,19 @@ public class WebdavHashUserRealm extends HashUserRealm {
 
     public List<String> getUserRoles(String userName) {
         List<String> list = new ArrayList<String>();
-
         if (userName != null && !"".equals(userName)) {
-            Set<String> roleNames = this._roles.keySet();
-            for (String role : roleNames) {
-                HashSet userHashSet = (HashSet) this._roles.get(role);
-                Iterator iterator = userHashSet.iterator();
-                while (iterator.hasNext()) {
-                    String user = (String) iterator.next();
+            @SuppressWarnings("unchecked")
+			Set<String> roles = this._roles.keySet();
+            for (String role : roles) {
+				@SuppressWarnings("unchecked")
+				HashSet<String> userHashSet = (HashSet<String>) this._roles.get(role);
+                for (String user : userHashSet) {
                     if (userName.equals(user)) {
                         list.add(role);
                     }
                 }
-
             }
         }
-
         return list;
     }
 

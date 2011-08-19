@@ -22,12 +22,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
-import java.text.SimpleDateFormat;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,10 +37,19 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
-import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.jackrabbit.webdav.*;
-import org.apache.jackrabbit.webdav.security.*;
+import org.apache.hadoop.util.StringUtils;
+import org.apache.jackrabbit.webdav.DavCompliance;
+import org.apache.jackrabbit.webdav.DavConstants;
+import org.apache.jackrabbit.webdav.DavException;
+import org.apache.jackrabbit.webdav.DavResource;
+import org.apache.jackrabbit.webdav.DavResourceFactory;
+import org.apache.jackrabbit.webdav.DavResourceIterator;
+import org.apache.jackrabbit.webdav.DavResourceIteratorImpl;
+import org.apache.jackrabbit.webdav.DavResourceLocator;
+import org.apache.jackrabbit.webdav.DavServletResponse;
+import org.apache.jackrabbit.webdav.DavSession;
+import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.io.InputContext;
 import org.apache.jackrabbit.webdav.io.OutputContext;
 import org.apache.jackrabbit.webdav.lock.ActiveLock;
@@ -56,7 +65,9 @@ import org.apache.jackrabbit.webdav.property.DavPropertySet;
 import org.apache.jackrabbit.webdav.property.DefaultDavProperty;
 import org.apache.jackrabbit.webdav.property.PropEntry;
 import org.apache.jackrabbit.webdav.property.ResourceType;
-import org.apache.jackrabbit.webdav.simple.ResourceConfig;
+import org.apache.jackrabbit.webdav.security.CurrentUserPrivilegeSetProperty;
+import org.apache.jackrabbit.webdav.security.Privilege;
+import org.apache.jackrabbit.webdav.security.SecurityConstants;
 
 public class FSDavResource implements DavResource {
 
@@ -321,39 +332,41 @@ public class FSDavResource implements DavResource {
         }
         try {
             FileStatus fstat = fs.getFileStatus(getPath());
-            properties.add(new DefaultDavProperty(DavPropertyName.GETCONTENTLENGTH, fstat.getLen()));
+            properties.add(new DefaultDavProperty<Long>(DavPropertyName.GETCONTENTLENGTH, fstat.getLen()));
 
             SimpleDateFormat simpleFormat =  (SimpleDateFormat) DavConstants.modificationDateFormat.clone();
             simpleFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
             Date date = new Date(fstat.getModificationTime());
-            properties.add(new DefaultDavProperty(DavPropertyName.GETLASTMODIFIED, simpleFormat.format(date)));
+            properties.add(new DefaultDavProperty<String>(DavPropertyName.GETLASTMODIFIED, simpleFormat.format(date)));
 
-            properties.add(new DefaultDavProperty(SecurityConstants.OWNER, fstat.getOwner()));
-            properties.add(new DefaultDavProperty(SecurityConstants.GROUP, fstat.getGroup()));
+            properties.add(new DefaultDavProperty<String>(SecurityConstants.OWNER, fstat.getOwner()));
+            properties.add(new DefaultDavProperty<String>(SecurityConstants.GROUP, fstat.getGroup()));
 
             UserGroupInformation ugi = UserGroupInformation.getLoginUser();
             String ugiStr = conf.get("hadoop.job.ugi");
             if (ugiStr != null) {
             	ugi = UserGroupInformation.createProxyUser(ugiStr, UserGroupInformation.getLoginUser());
             }
+//            UnixUserGroupInformation ugi = UnixUserGroupInformation.readFromConf(this.conf,
+//                                                                                 UnixUserGroupInformation.UGI_PROPERTY_NAME);
             CurrentUserPrivilegeSetProperty currentUserPrivilegeSetProperty = UtilsHelper.getCurrentUserPrivilegeSetProperty(fstat, ugi);
-            properties.add(new DefaultDavProperty(SecurityConstants.CURRENT_USER_PRIVILEGE_SET,
+            properties.add(new DefaultDavProperty<Collection<Privilege>>(SecurityConstants.CURRENT_USER_PRIVILEGE_SET,
                                                   currentUserPrivilegeSetProperty.getValue()));
         } catch (IOException ex) {
             LOG.warn(StringUtils.stringifyException(ex));
         }
         // set (or reset) fundamental properties
         if (getDisplayName() != null) {
-            properties.add(new DefaultDavProperty(DavPropertyName.DISPLAYNAME, getDisplayName()));
+            properties.add(new DefaultDavProperty<String>(DavPropertyName.DISPLAYNAME, getDisplayName()));
         }
         if (isCollection()) {
             properties.add(new ResourceType(ResourceType.COLLECTION));
             // Windows XP support
-            properties.add(new DefaultDavProperty(DavPropertyName.ISCOLLECTION, "1"));
+            properties.add(new DefaultDavProperty<String>(DavPropertyName.ISCOLLECTION, "1"));
         } else {
             properties.add(new ResourceType(ResourceType.DEFAULT_RESOURCE));
             // Windows XP support
-            properties.add(new DefaultDavProperty(DavPropertyName.ISCOLLECTION, "0"));
+            properties.add(new DefaultDavProperty<String>(DavPropertyName.ISCOLLECTION, "0"));
         }
 
         //curtently no locking
@@ -375,7 +388,7 @@ public class FSDavResource implements DavResource {
         return properties;
     }
 
-    public DavProperty getProperty(DavPropertyName name) {
+    public DavProperty<?> getProperty(DavPropertyName name) {
         initProperties();
         return properties.get(name);
     }
@@ -390,11 +403,11 @@ public class FSDavResource implements DavResource {
         properties.remove(propertyName);
     }
 
-    public void setProperty(DavProperty property) throws DavException {
+    public void setProperty(DavProperty<?> property) throws DavException {
         initProperties();
     }
 
-    public MultiStatusResponse alterProperties(List changeList) throws DavException {
+    public MultiStatusResponse alterProperties(List<? extends PropEntry> changeList) throws DavException {
         return null;
     }
 

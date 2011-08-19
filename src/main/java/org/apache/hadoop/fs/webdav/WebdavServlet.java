@@ -18,22 +18,32 @@
 
 package org.apache.hadoop.fs.webdav;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.io.*;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.List;
 
-import javax.servlet.http.*;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.fs.permission.AccessControlException;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.jackrabbit.webdav.DavLocatorFactory;
+import org.apache.jackrabbit.webdav.DavResource;
+import org.apache.jackrabbit.webdav.DavResourceFactory;
+import org.apache.jackrabbit.webdav.DavSessionProvider;
+import org.apache.jackrabbit.webdav.MultiStatus;
+import org.apache.jackrabbit.webdav.MultiStatusResponse;
+import org.apache.jackrabbit.webdav.WebdavRequest;
+import org.apache.jackrabbit.webdav.WebdavResponse;
+import org.apache.jackrabbit.webdav.WebdavResponseImpl;
 import org.apache.jackrabbit.webdav.server.AbstractWebdavServlet;
-import org.apache.jackrabbit.webdav.*;
 import org.apache.jackrabbit.webdav.simple.LocatorFactoryImpl;
 import org.apache.jackrabbit.webdav.simple.ResourceConfig;
 import org.apache.jackrabbit.webdav.simple.ResourceFactoryImpl;
@@ -154,32 +164,32 @@ public class WebdavServlet extends AbstractWebdavServlet {
         log.info("WWW-Authenticate header = '" + authenticate_header + "'");
 
         log.info("INIT_PARAMETERS: ");
-        Enumeration e2 = getInitParameterNames();
+        Enumeration<String> e2 = getInitParameterNames();
         while (e2.hasMoreElements()) {
-            String name = (String) e2.nextElement();
+            String name = e2.nextElement();
             log.info("-- " + name + ": ");
         }
         log.info("ServletInfo: " + getServletInfo());
         log.info("ServletName: " + getServletName());
 
         log.info("SERVLET_CONFIG_PARAMETERS: ");
-        Enumeration e3 = getServletConfig().getInitParameterNames();
+        Enumeration<String> e3 = getServletConfig().getInitParameterNames();
         while (e3.hasMoreElements()) {
-            String name = (String) e3.nextElement();
+            String name = e3.nextElement();
             log.info("-- " + name + ": ");
         }
 
         log.info("SERVLET_CONTEXT_PARAMETERS: ");
-        Enumeration e4 = getServletContext().getInitParameterNames();
+        Enumeration<String> e4 = getServletContext().getInitParameterNames();
         while (e4.hasMoreElements()) {
-            String name = (String) e4.nextElement();
+            String name = e4.nextElement();
             log.info("-- " + name + ": ");
         }
 
         log.info("SERVLET_CONTEXT_ATTRIBUTES: ");
-        Enumeration e5 = getServletContext().getAttributeNames();
+        Enumeration<String> e5 = getServletContext().getAttributeNames();
         while (e5.hasMoreElements()) {
-            String name = (String) e5.nextElement();
+            String name = e5.nextElement();
             log.info("-- " + name + ": ");
         }
 
@@ -240,7 +250,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
     @Override
     public DavResourceFactory getResourceFactory() {
         if (resourceFactory == null) {
-            resourceFactory = new FSDavResourceFactory(getConf(getServletContext()));
+        	resourceFactory = new FSDavResourceFactory(getConf(getServletContext()));
         }
         return resourceFactory;
     }
@@ -358,9 +368,9 @@ public class WebdavServlet extends AbstractWebdavServlet {
 
         if (conf == null) {
             conf = hadoopConfig;
-            Enumeration e = application.getInitParameterNames();
+            Enumeration<String> e = application.getInitParameterNames();
             while (e.hasMoreElements()) {
-                String name = (String) e.nextElement();
+                String name = e.nextElement();
                 conf.set(name, application.getInitParameter(name));
             }
             application.setAttribute("dfs.servlet.conf.key", conf);
@@ -403,23 +413,23 @@ public class WebdavServlet extends AbstractWebdavServlet {
 
         log.info("  RemoteHost: " + request.getRemoteHost());
         log.info("| ATTRIBUTES: ");
-        Enumeration e1 = request.getAttributeNames();
+        Enumeration<String> e1 = request.getAttributeNames();
         while (e1.hasMoreElements()) {
-            String name = (String) e1.nextElement();
+            String name = e1.nextElement();
             log.info("|| " + name + ": ");
         }
 
         log.info("| PARAMETERS: ");
-        Enumeration e2 = request.getParameterNames();
+        Enumeration<String> e2 = request.getParameterNames();
         while (e2.hasMoreElements()) {
-            String name = (String) e2.nextElement();
+            String name = e2.nextElement();
             log.info("|| " + name + ": ");
         }
 
         log.info("HEADERS: ");
-        Enumeration e6 = request.getHeaderNames();
+        Enumeration<String> e6 = request.getHeaderNames();
         while (e6.hasMoreElements()) {
-            String name = (String) e6.nextElement();
+            String name = e6.nextElement();
             log.info("-- " + name + ": " + request.getHeader(name));
         }
         log.info("RemoteUser: " + request.getRemoteUser());
@@ -451,8 +461,10 @@ public class WebdavServlet extends AbstractWebdavServlet {
 
                 WebdavResponse webdavResponse = new WebdavResponseImpl(response);
                 webdavResponse.sendMultiStatus(ms);
-            } else new WebdavResponseImpl(response).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            } else {
+            	new WebdavResponseImpl(response).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
+        }
 
         log.info("\\--------------------------------------------------");
     }

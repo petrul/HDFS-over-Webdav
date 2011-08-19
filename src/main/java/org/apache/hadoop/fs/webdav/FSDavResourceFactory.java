@@ -20,8 +20,6 @@ package org.apache.hadoop.fs.webdav;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.DavMethods;
@@ -31,12 +29,8 @@ import org.apache.jackrabbit.webdav.DavResourceLocator;
 import org.apache.jackrabbit.webdav.DavServletRequest;
 import org.apache.jackrabbit.webdav.DavServletResponse;
 import org.apache.jackrabbit.webdav.DavSession;
-import org.apache.jackrabbit.webdav.simple.ResourceConfig;
 
 public class FSDavResourceFactory implements DavResourceFactory {
-
-    private static final Log LOG = LogFactory.getLog(FSDavResourceFactory.class);
-
     private final Configuration conf;
 
     public FSDavResourceFactory(Configuration conf) {
