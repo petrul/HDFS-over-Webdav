@@ -128,9 +128,11 @@
 				<configuration>
 					<!-- ignore log4j.properties from the hadoop-core jar -->
 					<descriptor>jar-with-dependencies-without-log4j-config.xml</descriptor>
-<!-- 					<descriptorRefs> -->
-<!-- 						<descriptorRef>jar-with-dependencies</descriptorRef> -->
-<!-- 					</descriptorRefs> -->
+<!--
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+ -->
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
