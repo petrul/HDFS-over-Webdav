@@ -105,7 +105,7 @@ public class FSDavResource implements DavResource {
         this.session = session;
         this.conf = conf;
         this.fs = FileSystem.get(conf);
-        String pathStr = URLDecoder.decode(locator.getResourcePath());
+        String pathStr = URLDecoder.decode(locator.getResourcePath(), "UTF-8");
         if (pathStr.trim().equals("")) { //empty path is not allowed
             pathStr = "/";
         }
