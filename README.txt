@@ -1,20 +1,17 @@
 HDFS over WEBDAV
 ================
 
+This code is webdav for Hadoop 0.23. It is forked from gensth who forked from huyphan.
+
 This code is the modified version of http://www.hadoop.iponweb.net to make it compatible with new version of Hadoop.
-This version of hdfs-webdav works with Hadoop 0.20.1, you can checkout the previous commits on my git repository for older version of Hadoop.
+This version of hdfs-webdav works with Hadoop 0.23, you can checkout the previous commits on my git repository for older version of Hadoop.
 
 INSTALLATION
 ============
 
-1. Extract the source code and Use ant to compile :
+1. Extract the source code and Use maven to compile :
 
-$ ant -Dhadoop.dir=/opt/hadoop-0.20.1
-
-2. Copy all the file under bin/ and conf/ to corresponding directory in hadoop dir:
-
-$ cp bin/* /opt/hadoop-0.20.1/bin/
-$ cp conf/* /opt/hadoop-0.20.1/conf/
+mvn package
 
 3. Modify config file hadoop-webdav.sh to satisfy your configuration:
 
@@ -25,10 +22,6 @@ $ cp conf/* /opt/hadoop-0.20.1/conf/
 4. Start your webdav server:
 $ /opt/hadoop-0.20.1/bin/start-webdav.sh
 
-Notice
-======
-Read the file README.old to get more information.
-
-
 
 Huy Phan <dachuy@gmail.com>
+Petru Dimulescu <petru.dimulescu@gmail.com>
