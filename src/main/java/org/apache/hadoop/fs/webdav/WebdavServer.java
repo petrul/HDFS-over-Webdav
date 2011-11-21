@@ -32,7 +32,8 @@ public class WebdavServer {
 	private static final Log LOG = LogFactory.getLog(WebdavServer.class);
 
     public static final String WEB_APP_CONTEXT = "webAppContext";
-    private static final String DEFAULT_FS_NAME = "hdfs://127.0.0.1:8020";
+    //private static final String DEFAULT_FS_NAME = "hdfs://127.0.0.1:8020";
+    private static final String DEFAULT_FS_NAME = "hdfs://ns388163.ovh.net:8020";
     private static final String DEFAULT_LISTEN_ADDRESS = "0.0.0.0";
     private static final String DEFAULT_BIND_PORT = "19800";
 

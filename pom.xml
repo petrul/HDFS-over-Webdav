@@ -17,7 +17,8 @@
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<mainClass>org.apache.hadoop.fs.webdav.WebdavServer</mainClass>
 
-		<hadoop.version>0.24.0-SNAPSHOT</hadoop.version>
+<!-- 		<hadoop.version>0.24.0-SNAPSHOT</hadoop.version> -->
+		<hadoop.version>0.23.0-SNAPSHOT</hadoop.version>
 	</properties>
 
 <!--
@@ -77,6 +78,19 @@
 			</exclusions>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-auth</artifactId>
+			<version>${hadoop.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-hdfs</artifactId>
+			<version>${hadoop.version}</version>
+		</dependency>
+		
+
 		<!-- Logging -->
 		<dependency>
 		    <groupId>org.slf4j</groupId>
@@ -121,6 +135,21 @@
 			<scope>test</scope>
 		</dependency>
  -->
+		<dependency>
+			<groupId>commons-configuration</groupId>
+			<artifactId>commons-configuration</artifactId>
+			<version>1.7</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.collections</groupId>
+			<artifactId>google-collections</artifactId>
+			<version>1.0</version>
+		</dependency>
+<dependency>
+    <groupId>com.google.protobuf</groupId>
+    <artifactId>protobuf-java</artifactId>
+    <version>2.4.1</version>
+</dependency>
 	</dependencies>
 
 	<build>

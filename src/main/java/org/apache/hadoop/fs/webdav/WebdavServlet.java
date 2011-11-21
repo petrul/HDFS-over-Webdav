@@ -29,9 +29,9 @@ import javax.servlet.ServletException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UnixUserGroupInformation;
-import org.apache.hadoop.fs.permission.AccessControlException;
-import org.apache.jackrabbit.server.AbstractWebdavServlet;
+//import org.apache.hadoop.security.UnixUserGroupInformation;
+import org.apache.hadoop.security.AccessControlException;
+import org.apache.jackrabbit.webdav.server.AbstractWebdavServlet;
 import org.apache.jackrabbit.webdav.*;
 import org.apache.jackrabbit.webdav.simple.LocatorFactoryImpl;
 import org.apache.jackrabbit.webdav.simple.ResourceConfig;
@@ -333,8 +333,9 @@ public class WebdavServlet extends AbstractWebdavServlet {
             List<String> userRoles = userRealm.getUserRoles(currentUserName);
             currentUserRoles = userRoles;
 
-            UnixUserGroupInformation ugi = new UnixUserGroupInformation(currentUserName, userRoles.toArray(new String[0]));
-            UnixUserGroupInformation.saveToConf(conf, UnixUserGroupInformation.UGI_PROPERTY_NAME, ugi);
+// TODO commented these out but I should replace them with modern kerberos-based authentication
+//            UnixUserGroupInformation ugi = new UnixUserGroupInformation(currentUserName, userRoles.toArray(new String[0]));
+//            UnixUserGroupInformation.saveToConf(conf, UnixUserGroupInformation.UGI_PROPERTY_NAME, ugi);
         }
         return conf;
     }
@@ -397,6 +398,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
         try {
             super.service(request, response);
         } catch (Exception e) {
+        	log.error(e, e);
             if (e.getCause() instanceof AccessControlException) {
                     log.info("EXCEPTION: Can't access to resource. You don't have permissions.");
                 MultiStatusResponse msr = new MultiStatusResponse(request.getRequestURL().toString(), 401,
