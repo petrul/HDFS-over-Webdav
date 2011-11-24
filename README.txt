@@ -9,6 +9,15 @@ This version of hdfs-webdav works with Hadoop 0.23, you can checkout the previou
 INSTALLATION
 ============
 
+2. Get 0.23 Hadoop jars into your local repository. The exact version mentioned in the pom.xml is 
+0.23-SNAPSHOT. One way of doing it is getting hadoop source and compiling:
+
+svn co https://svn.apache.org/repos/asf/hadoop/common/branches/branch-0.23/
+
+or
+
+git 
+
 1. Extract the source code and Use maven to compile :
 
 mvn package
