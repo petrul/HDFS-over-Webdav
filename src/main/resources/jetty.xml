@@ -1,0 +1,31 @@
+<?xml version="1.0"  encoding="ISO-8859-1"?>
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://jetty.mortbay.org/configure.dtd">
+<!-- =============================================================== -->
+<!-- Configure the Jetty Server                                      -->
+<!-- =============================================================== -->
+<Configure class="org.mortbay.jetty.Server">
+    <!-- Uncomment these lines if you want check user permission  -->
+    <Call name="addUserRealm">
+        <Arg>
+<!--             <New class="org.apache.hadoop.fs.webdav.AnythingGoesUserRealm"> -->
+			<New class="org.apache.hadoop.fs.webdav.WebdavHashUserRealm">
+                <Arg>HDFSUserRealm</Arg>
+                <Arg>conf/accounts.properties</Arg>
+            </New>
+        </Arg>
+    </Call>
+
+    <Call name="addHandler">
+       <Arg>
+               <New id="DefaultHandler" class="org.mortbay.jetty.webapp.WebAppContext">
+                      <Arg>/</Arg>
+                      <Arg>/</Arg> 
+                      <Call name="setDescriptor"><Arg>conf/web.xml</Arg></Call> 
+                      <Call name="setAttribute">
+                          <Arg>webAppContext</Arg>
+                          <Arg><Ref id="DefaultHandler"/></Arg>
+                      </Call>
+               </New>
+       </Arg>
+    </Call>
+</Configure>
