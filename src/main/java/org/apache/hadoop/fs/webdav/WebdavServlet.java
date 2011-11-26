@@ -142,32 +142,32 @@ public class WebdavServlet extends AbstractWebdavServlet {
         log.info("WWW-Authenticate header = '" + authenticate_header + "'");
 
         log.info("INIT_PARAMETERS: ");
-        Enumeration e2 = getInitParameterNames();
+        Enumeration<String> e2 = getInitParameterNames();
         while (e2.hasMoreElements()) {
-            String name = (String) e2.nextElement();
+            String name = e2.nextElement();
             log.info("-- " + name + ": ");
         }
         log.info("ServletInfo: " + getServletInfo());
         log.info("ServletName: " + getServletName());
 
         log.info("SERVLET_CONFIG_PARAMETERS: ");
-        Enumeration e3 = getServletConfig().getInitParameterNames();
+        Enumeration<String> e3 = getServletConfig().getInitParameterNames();
         while (e3.hasMoreElements()) {
-            String name = (String) e3.nextElement();
+            String name = e3.nextElement();
             log.info("-- " + name + ": ");
         }
 
         log.info("SERVLET_CONTEXT_PARAMETERS: ");
-        Enumeration e4 = getServletContext().getInitParameterNames();
+        Enumeration<?> e4 = getServletContext().getInitParameterNames();
         while (e4.hasMoreElements()) {
             String name = (String) e4.nextElement();
             log.info("-- " + name + ": ");
         }
 
         log.info("SERVLET_CONTEXT_ATTRIBUTES: ");
-        Enumeration e5 = getServletContext().getAttributeNames();
+        Enumeration<String> e5 = getServletContext().getAttributeNames();
         while (e5.hasMoreElements()) {
-            String name = (String) e5.nextElement();
+            String name = e5.nextElement();
             log.info("-- " + name + ": ");
         }
 
@@ -319,9 +319,9 @@ public class WebdavServlet extends AbstractWebdavServlet {
 
         if (conf == null) {
             conf = hadoopConfig;
-            Enumeration e = application.getInitParameterNames();
+            Enumeration<String> e = application.getInitParameterNames();
             while (e.hasMoreElements()) {
-                String name = (String) e.nextElement();
+                String name = e.nextElement();
                 conf.set(name, application.getInitParameter(name));
             }
             application.setAttribute("dfs.servlet.conf.key", conf);
@@ -360,21 +360,21 @@ public class WebdavServlet extends AbstractWebdavServlet {
 
         log.info("  RemoteHost: " + request.getRemoteHost());
         log.info("| ATTRIBUTES: ");
-        Enumeration e1 = request.getAttributeNames();
+        Enumeration<String> e1 = request.getAttributeNames();
         while (e1.hasMoreElements()) {
             String name = (String) e1.nextElement();
             log.info("|| " + name + ": ");
         }
 
         log.info("| PARAMETERS: ");
-        Enumeration e2 = request.getParameterNames();
+        Enumeration<String> e2 = request.getParameterNames();
         while (e2.hasMoreElements()) {
             String name = (String) e2.nextElement();
             log.info("|| " + name + ": ");
         }
         
         log.info("HEADERS: ");
-        Enumeration e6 = request.getHeaderNames();
+        Enumeration<String> e6 = request.getHeaderNames();
         while (e6.hasMoreElements()) {
             String name = (String) e6.nextElement();
             log.info("-- " + name + ": " + request.getHeader(name));

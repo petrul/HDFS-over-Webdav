@@ -34,14 +34,17 @@ public class WebdavHashUserRealm extends HashUserRealm {
         super(name, config);
     }
 
+    @SuppressWarnings("unchecked")
     public List<String> getUserRoles(String userName) {
         List<String> list = new ArrayList<String>();
+//        list.add("hdfs-user");
+//        return list;
 
         if (userName != null && !"".equals(userName)) {
-            Set<String> roleNames = this._roles.keySet();
+			Set<String> roleNames = this._roles.keySet();
             for (String role : roleNames) {
-                HashSet userHashSet = (HashSet) this._roles.get(role);
-                Iterator iterator = userHashSet.iterator();
+                HashSet<String> userHashSet = (HashSet<String>) this._roles.get(role);
+                Iterator<String> iterator = userHashSet.iterator();
                 while (iterator.hasNext()) {
                     String user = (String) iterator.next();
                     if (userName.equals(user)) {

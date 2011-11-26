@@ -18,22 +18,27 @@
 
 package org.apache.hadoop.fs.webdav;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.xml.XmlConfiguration;
-import java.io.FileInputStream;
 
 public class WebdavServer {
+	
 	private static final Log LOG = LogFactory.getLog(WebdavServer.class);
 
-    public static final String WEB_APP_CONTEXT = "webAppContext";
-    //private static final String DEFAULT_FS_NAME = "hdfs://127.0.0.1:8020";
-    private static final String DEFAULT_FS_NAME = "hdfs://ns388163.ovh.net:8020";
+    public static final String WEB_APP_CONTEXT 	= "webAppContext";
+    private static final String DEFAULT_FS_NAME = "hdfs://127.0.0.1:8020";
     private static final String DEFAULT_LISTEN_ADDRESS = "0.0.0.0";
     private static final String DEFAULT_BIND_PORT = "19800";
 
@@ -43,7 +48,7 @@ public class WebdavServer {
         LOG.info("Initializing webdav server");
 
         webServer = new Server();
-        XmlConfiguration configuration = new XmlConfiguration(new FileInputStream("conf/jetty.xml"));
+        XmlConfiguration configuration = new XmlConfiguration(this.getClass().getClassLoader().getResourceAsStream("jetty.xml"));
         configuration.configure(webServer);
 
         Connector connector=new SelectChannelConnector();
@@ -57,8 +62,8 @@ public class WebdavServer {
     }
 
     public static void main(String[] args) throws Exception {
-        String usage = "WebdavServer";
-        String header = "Run a webdav interface to a hadoop filesystem.";
+        final String usage = "WebdavServer";
+        final String header = "Run a webdav interface to a hadoop filesystem.";
         Options options = new Options();
         options = buildGeneralOptions(options);
         CommandLineParser parser = new GnuParser();
@@ -73,9 +78,10 @@ public class WebdavServer {
         // we use this cheesy way of passing the configuration to the WebdavServlet because
         //  jetty-5 doesn't have a way to send it in the WebdavServlet constructor
         Configuration config = new Configuration();
-        String fsDefaultName = cmd.getOptionValue("fs", DEFAULT_FS_NAME);
-        if (fsDefaultName != null) {
-            config.set("fs.default.name", fsDefaultName);
+        String hdfsUrl = cmd.getOptionValue("fs", DEFAULT_FS_NAME);
+        if (hdfsUrl != null) {
+        	LOG.info("will connect to " + hdfsUrl);
+            config.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY, hdfsUrl);
         }
         WebdavServlet.setConf(config);
 

@@ -1,0 +1,71 @@
+applicationName = "hdfs-over-webdav"
+version = '0.23.0-SNAPSHOT'
+mainClassName="org.apache.hadoop.fs.webdav.WebdavServer"
+sourceCompatibility = 1.6
+
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+
+dependencies {
+	hadoop_version = '0.23.0-SNAPSHOT'
+	
+	compile 'org.apache.jackrabbit:jackrabbit-jcr-server:1.4', 
+		'javax.jcr:jcr:1.0',
+		"org.apache.hadoop:hadoop-common:$hadoop_version"
+		"org.apache.hadoop:hadoop-auth:$hadoop_version"
+		"org.apache.hadoop:hadoop-hdfs:$hadoop_version"
+		"org.apache.hadoop:hadoop-annotations:$hadoop_version"
+	
+	testCompile: 'junit:junit:4.8.2'
+}
+
+
+task listJars << {
+    configurations.compile.each { File file -> println file.name }
+}
+
+/*
+task startupScripts(type:CreateStartupScripts) {
+	outputDir: "$buildDir/output/bin"
+}*/
+
+
+task distDir(dependsOn:jar) {
+//	project.properties.each { key, value -> println "$key => $value" }
+
+	copy {
+		into "$buildDir/output/"
+    	from jar.archivePath
+	}
+	
+	copy {
+	    into "$buildDir/output/lib"
+	  	from configurations.runtime
+	}
+
+	//println "${project.rootDir}/bin/"
+	copy {
+		into "$buildDir/output/bin"
+		from "${project.rootDir}/bin/"
+	}
+
+	
+}
+
+
+task myzip (dependsOn:distDir, type:Zip) {
+		from "build/output"
+}
+
+task mytar(dependsOn:distDir, type:Tar) {
+		from "build/output"
+}
+
+task dist {
+	dependsOn(myzip,mytar)
+}
