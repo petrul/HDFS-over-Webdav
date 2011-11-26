@@ -1,5 +1,5 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
+-+ * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -429,7 +431,7 @@ public class FSDavResource implements DavResource {
 		initProperties();
 	}
 
-	public MultiStatusResponse alterProperties(List changeList) throws DavException {
+	public MultiStatusResponse alterProperties(@SuppressWarnings("rawtypes") List changeList) throws DavException {
 		return null;
 	}
 
@@ -459,7 +461,7 @@ public class FSDavResource implements DavResource {
 
 	public boolean isCollection() {
 		try {
-			return fs.getFileStatus(path).isDir();
+			return fs.getFileStatus(path).isDirectory();
 		} catch (Exception ex) {
 			return false;
 		}

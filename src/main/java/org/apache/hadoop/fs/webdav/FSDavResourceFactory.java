@@ -35,7 +35,7 @@ import org.apache.jackrabbit.webdav.simple.ResourceConfig;
 
 public class FSDavResourceFactory implements DavResourceFactory {
 
-    private static final Log LOG = LogFactory.getLog(FSDavResourceFactory.class);
+    static final Log LOG = LogFactory.getLog(FSDavResourceFactory.class);
 
     private final ResourceConfig resourceConfig;
     private final Configuration conf;
