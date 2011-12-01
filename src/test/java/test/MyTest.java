@@ -1,11 +1,9 @@
 package test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
-
-import com.sun.security.auth.UnixNumericUserPrincipal;
 
 public class MyTest {
 
