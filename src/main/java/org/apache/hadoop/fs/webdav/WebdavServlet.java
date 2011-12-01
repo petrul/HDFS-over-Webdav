@@ -18,25 +18,36 @@
 
 package org.apache.hadoop.fs.webdav;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
-import java.io.*;
-import java.util.*;
+import java.util.Enumeration;
 
-import javax.servlet.http.*;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-//import org.apache.hadoop.security.UnixUserGroupInformation;
 import org.apache.hadoop.security.AccessControlException;
+import org.apache.jackrabbit.webdav.DavException;
+import org.apache.jackrabbit.webdav.DavLocatorFactory;
+import org.apache.jackrabbit.webdav.DavMethods;
+import org.apache.jackrabbit.webdav.DavResource;
+import org.apache.jackrabbit.webdav.DavResourceFactory;
+import org.apache.jackrabbit.webdav.DavServletResponse;
+import org.apache.jackrabbit.webdav.DavSessionProvider;
+import org.apache.jackrabbit.webdav.MultiStatus;
+import org.apache.jackrabbit.webdav.MultiStatusResponse;
+import org.apache.jackrabbit.webdav.WebdavRequest;
+import org.apache.jackrabbit.webdav.WebdavRequestImpl;
+import org.apache.jackrabbit.webdav.WebdavResponse;
+import org.apache.jackrabbit.webdav.WebdavResponseImpl;
 import org.apache.jackrabbit.webdav.server.AbstractWebdavServlet;
-import org.apache.jackrabbit.webdav.*;
 import org.apache.jackrabbit.webdav.simple.LocatorFactoryImpl;
 import org.apache.jackrabbit.webdav.simple.ResourceConfig;
 import org.apache.jackrabbit.webdav.simple.ResourceFactoryImpl;
-import org.mortbay.jetty.webapp.WebAppContext;
 
 
 public class WebdavServlet extends AbstractWebdavServlet {
@@ -46,7 +57,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
     /**
      * the default logger
      */
-    private static final Log log = LogFactory.getLog(WebdavServlet.class);
+    private static final Log LOG = LogFactory.getLog(WebdavServlet.class);
 
     /**
      * init param name of the repository prefix
@@ -80,9 +91,6 @@ public class WebdavServlet extends AbstractWebdavServlet {
      */
     public static final String CTX_ATTR_RESOURCE_PATH_PREFIX = "hadoop.webdav.resourcepath";
 
-    /**
-     * the resource path prefix
-     */
     private String resourcePathPrefix;
 
     /**
@@ -113,7 +121,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
     private static Configuration hadoopConfig = new Configuration();
 
 
-    private static String currentUserName;
+//    private static String currentUserName;
 
     /**
      * Init this servlet
@@ -125,51 +133,51 @@ public class WebdavServlet extends AbstractWebdavServlet {
         super.init();
         resourcePathPrefix = getInitParameter(INIT_PARAM_RESOURCE_PATH_PREFIX);
         if (resourcePathPrefix == null) {
-            log.debug("Missing path prefix -> setting to empty string.");
+            LOG.debug("Missing path prefix -> setting to empty string.");
             resourcePathPrefix = "";
         } else if (resourcePathPrefix.endsWith("/")) {
-            log.debug("Path prefix ends with '/' -> removing trailing slash.");
+            LOG.debug("Path prefix ends with '/' -> removing trailing slash.");
             resourcePathPrefix = resourcePathPrefix.substring(0, resourcePathPrefix.length() - 1);
         }
 
-        getServletContext().setAttribute(CTX_ATTR_RESOURCE_PATH_PREFIX, resourcePathPrefix);
-        log.info(INIT_PARAM_RESOURCE_PATH_PREFIX + " = '" + resourcePathPrefix + "'");
+//        getServletContext().setAttribute(CTX_ATTR_RESOURCE_PATH_PREFIX, resourcePathPrefix);
+//        LOG.info(INIT_PARAM_RESOURCE_PATH_PREFIX + " = '" + resourcePathPrefix + "'");
 
         authenticate_header = getInitParameter(INIT_PARAM_AUTHENTICATE_HEADER);
         if (authenticate_header == null) {
             authenticate_header = DEFAULT_AUTHENTICATE_HEADER;
         }
-        log.info("WWW-Authenticate header = '" + authenticate_header + "'");
-
-        log.info("INIT_PARAMETERS: ");
-        Enumeration<String> e2 = getInitParameterNames();
-        while (e2.hasMoreElements()) {
-            String name = e2.nextElement();
-            log.info("-- " + name + ": ");
-        }
-        log.info("ServletInfo: " + getServletInfo());
-        log.info("ServletName: " + getServletName());
-
-        log.info("SERVLET_CONFIG_PARAMETERS: ");
-        Enumeration<String> e3 = getServletConfig().getInitParameterNames();
-        while (e3.hasMoreElements()) {
-            String name = e3.nextElement();
-            log.info("-- " + name + ": ");
-        }
-
-        log.info("SERVLET_CONTEXT_PARAMETERS: ");
-        Enumeration<?> e4 = getServletContext().getInitParameterNames();
-        while (e4.hasMoreElements()) {
-            String name = (String) e4.nextElement();
-            log.info("-- " + name + ": ");
-        }
-
-        log.info("SERVLET_CONTEXT_ATTRIBUTES: ");
-        Enumeration<String> e5 = getServletContext().getAttributeNames();
-        while (e5.hasMoreElements()) {
-            String name = e5.nextElement();
-            log.info("-- " + name + ": ");
-        }
+//        LOG.info("WWW-Authenticate header = '" + authenticate_header + "'");
+//
+//        LOG.info("INIT_PARAMETERS: ");
+//        Enumeration<String> e2 = getInitParameterNames();
+//        while (e2.hasMoreElements()) {
+//            String name = e2.nextElement();
+//            LOG.info("-- " + name + ": ");
+//        }
+//        LOG.info("ServletInfo: " + getServletInfo());
+//        LOG.info("ServletName: " + getServletName());
+//
+//        LOG.info("SERVLET_CONFIG_PARAMETERS: ");
+//        Enumeration<String> e3 = getServletConfig().getInitParameterNames();
+//        while (e3.hasMoreElements()) {
+//            String name = e3.nextElement();
+//            LOG.info("-- " + name + ": ");
+//        }
+//
+//        LOG.info("SERVLET_CONTEXT_PARAMETERS: ");
+//        Enumeration<?> e4 = getServletContext().getInitParameterNames();
+//        while (e4.hasMoreElements()) {
+//            String name = (String) e4.nextElement();
+//            LOG.info("-- " + name + ": ");
+//        }
+//
+//        LOG.info("SERVLET_CONTEXT_ATTRIBUTES: ");
+//        Enumeration<String> e5 = getServletContext().getAttributeNames();
+//        while (e5.hasMoreElements()) {
+//            String name = e5.nextElement();
+//            LOG.info("-- " + name + ": ");
+//        }
 
         String configParam = getInitParameter(INIT_PARAM_RESOURCE_CONFIG);
         if (configParam != null) {
@@ -177,7 +185,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
                 config = new ResourceConfig();
                 config.parse(getServletContext().getResource(configParam));
             } catch (MalformedURLException e) {
-                log.debug("Unable to build resource filter provider.");
+                LOG.debug("Unable to build resource filter provider.");
             }
         }
     }
@@ -312,7 +320,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
      */
 
     //TODO for DEBUG only
-    private static List<String> currentUserRoles;
+//    private static List<String> currentUserRoles;
 
     private static Configuration getConf(ServletContext application) {
         Configuration conf = (Configuration) application.getAttribute("dfs.servlet.conf.key");
@@ -327,16 +335,16 @@ public class WebdavServlet extends AbstractWebdavServlet {
             application.setAttribute("dfs.servlet.conf.key", conf);
         }
 
-        if (currentUserName != null) {
-            WebAppContext webapp = (WebAppContext) application.getAttribute(WebdavServer.WEB_APP_CONTEXT);
-            WebdavHashUserRealm userRealm = (WebdavHashUserRealm) webapp.getSecurityHandler().getUserRealm();
-            List<String> userRoles = userRealm.getUserRoles(currentUserName);
-            currentUserRoles = userRoles;
+//        if (currentUserName != null) {
+//            WebAppContext webapp = (WebAppContext) application.getAttribute(WebdavServer.WEB_APP_CONTEXT);
+//            WebdavHashUserRealm userRealm = (WebdavHashUserRealm) webapp.getSecurityHandler().getUserRealm();
+//            List<String> userRoles = userRealm.getUserRoles(currentUserName);
+//            currentUserRoles = userRoles;
 
 // TODO commented these out but I should replace them with modern kerberos-based authentication
 //            UnixUserGroupInformation ugi = new UnixUserGroupInformation(currentUserName, userRoles.toArray(new String[0]));
 //            UnixUserGroupInformation.saveToConf(conf, UnixUserGroupInformation.UGI_PROPERTY_NAME, ugi);
-        }
+//        }
         return conf;
     }
 
@@ -347,71 +355,106 @@ public class WebdavServlet extends AbstractWebdavServlet {
      * @param config
      */
     public static void setConf(Configuration config) {
-        hadoopConfig = config;   
+        hadoopConfig = config;
     }
 
     protected void service(HttpServletRequest request,
-                           HttpServletResponse response) throws ServletException,
-                                                                IOException {
-        log.info("/--------------------------------------------------");
-        log.debug(request.getMethod() + " " + request.getRequestURL().toString());
-        log.info(request.getMethod() + " " + request.getRequestURL().toString());
-        log.info(request.getMethod() + " " + request.getRequestURI().toString());
+                           HttpServletResponse response) throws ServletException, IOException {
 
-        log.info("  RemoteHost: " + request.getRemoteHost());
-        log.info("| ATTRIBUTES: ");
-        Enumeration<String> e1 = request.getAttributeNames();
-        while (e1.hasMoreElements()) {
-            String name = (String) e1.nextElement();
-            log.info("|| " + name + ": ");
-        }
-
-        log.info("| PARAMETERS: ");
-        Enumeration<String> e2 = request.getParameterNames();
-        while (e2.hasMoreElements()) {
-            String name = (String) e2.nextElement();
-            log.info("|| " + name + ": ");
-        }
-        
-        log.info("HEADERS: ");
-        Enumeration<String> e6 = request.getHeaderNames();
-        while (e6.hasMoreElements()) {
-            String name = (String) e6.nextElement();
-            log.info("-- " + name + ": " + request.getHeader(name));
-        }
-        log.info("RemoteUser: " + request.getRemoteUser());
-        log.info("AuthType: " + request.getAuthType());
-
-        currentUserName = request.getRemoteUser();
-
-        String roles = "";
-        if (currentUserRoles != null) {
-            for (String roleName : currentUserRoles) {
-                roles += roleName + ", ";
-            }
-            if (roles.length() > 2) {
-                roles = roles.substring(0, roles.length()-2);
-            }
-        }
-        log.debug("Roles: " + roles);
-
+        WebdavRequest webdavRequest = new WebdavRequestImpl(request, getLocatorFactory());
+        // DeltaV requires 'Cache-Control' header for all methods except 'VERSION-CONTROL' and 'REPORT'.
+        int methodCode = DavMethods.getMethodCode(request.getMethod());
+        boolean noCache = DavMethods.isDeltaVMethod(webdavRequest) && !(DavMethods.DAV_VERSION_CONTROL == methodCode || DavMethods.DAV_REPORT == methodCode);
+        WebdavResponse webdavResponse = new WebdavResponseImpl(response, noCache);
         try {
-            super.service(request, response);
+            // make sure there is a authenticated user
+            if (!getDavSessionProvider().attachSession(webdavRequest)) {
+                return;
+            }
+
+            // check matching if=header for lock-token relevant operations
+            DavResource resource = getResourceFactory().createResource(webdavRequest.getRequestLocator(), webdavRequest, webdavResponse);
+            if (!isPreconditionValid(webdavRequest, resource)) {
+                webdavResponse.sendError(DavServletResponse.SC_PRECONDITION_FAILED);
+                return;
+            }
+            if (!execute(webdavRequest, webdavResponse, methodCode, resource)) {
+                super.service(request, response);
+            }
+
+        } catch (DavException e) {
+            if (e.getErrorCode() == HttpServletResponse.SC_UNAUTHORIZED) {
+                webdavResponse.setHeader("WWW-Authenticate", getAuthenticateHeaderValue());
+                StringBuilder sb = new StringBuilder(e.getStatusPhrase());
+                if (e.getCause() != null && e.getCause().getMessage() != null) {
+                	sb.append(": " + e.getCause().getMessage());
+                }
+                webdavResponse.sendError(e.getErrorCode(), sb.toString());
+            } else {
+                webdavResponse.sendError(e);
+            }
         } catch (Exception e) {
-        	log.error(e, e);
+        	LOG.error(e, e);
             if (e.getCause() instanceof AccessControlException) {
-                    log.info("EXCEPTION: Can't access to resource. You don't have permissions.");
-                MultiStatusResponse msr = new MultiStatusResponse(request.getRequestURL().toString(), 401,
-                                                                  "Can't access to resource. You don't have permissions.");
+                LOG.info("EXCEPTION: Can't access to resource. You don't have permissions.");
+                MultiStatusResponse msr = new MultiStatusResponse(
+                		request.getRequestURL().toString(), 401,
+                        "Can't access to resource. You don't have permissions.");
 
                 MultiStatus ms = new MultiStatus();
                 ms.addResponse(msr);
 
-                WebdavResponse webdavResponse = new WebdavResponseImpl(response);
+                webdavResponse = new WebdavResponseImpl(response);
                 webdavResponse.sendMultiStatus(ms);
-            } else new WebdavResponseImpl(response).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); 
+            } else {
+            	new WebdavResponseImpl(response).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            }
+        } finally {
+            getDavSessionProvider().releaseSession(webdavRequest);
         }
 
-        log.info("\\--------------------------------------------------");
     }
+
+//	private void debugInfo(HttpServletRequest request) {
+//		if (LOG.isDebugEnabled()) LOG.debug(request.getMethod() + " " + request.getRequestURL().toString());
+//        if (LOG.isDebugEnabled()) LOG.debug(request.getMethod() + " " + request.getRequestURL().toString());
+//        if (LOG.isDebugEnabled()) LOG.debug(request.getMethod() + " " + request.getRequestURI().toString());
+//
+//        if (LOG.isDebugEnabled()) LOG.debug("  RemoteHost: " + request.getRemoteHost());
+//        if (LOG.isDebugEnabled()) LOG.debug("| ATTRIBUTES: ");
+//        Enumeration<String> e1 = request.getAttributeNames();
+//        while (e1.hasMoreElements()) {
+//            String name = (String) e1.nextElement();
+//            LOG.debug("|| " + name + ": ");
+//        }
+//
+//        LOG.info("| PARAMETERS: ");
+//        Enumeration<String> e2 = request.getParameterNames();
+//        while (e2.hasMoreElements()) {
+//            String name = (String) e2.nextElement();
+//            LOG.info("|| " + name + ": ");
+//        }
+//        
+//        LOG.info("HEADERS: ");
+//        Enumeration<String> e6 = request.getHeaderNames();
+//        while (e6.hasMoreElements()) {
+//            String name = (String) e6.nextElement();
+//            LOG.info("-- " + name + ": " + request.getHeader(name));
+//        }
+//        LOG.info("RemoteUser: " + request.getRemoteUser());
+//        LOG.info("AuthType: " + request.getAuthType());
+//
+//        currentUserName = request.getRemoteUser();
+//
+//        String roles = "";
+//        if (currentUserRoles != null) {
+//            for (String roleName : currentUserRoles) {
+//                roles += roleName + ", ";
+//            }
+//            if (roles.length() > 2) {
+//                roles = roles.substring(0, roles.length()-2);
+//            }
+//        }
+//        LOG.debug("Roles: " + roles);
+//	}
 }

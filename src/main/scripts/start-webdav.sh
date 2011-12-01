@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# Start hadoop webdav daemon. Run this on master node.
-
-usage="Usage: start-webdav.sh"
+# Start hdfs webdav interface
+# 	usage ./start-webdav.sh -fs hdfs://nnserver:8020
+#
 
 BIN_DIR=`dirname "$0"`
 BIN_DIR=`cd "$BIN_DIR"; pwd`
@@ -18,5 +18,5 @@ for FILE in $BIN_DIR/../lib/*.jar; do
     CP=${CP}:$FILE;
 done
 
-echo java -classpath $CP org.apache.hadoop.fs.webdav.WebdavServer $*
+#echo java -classpath $CP org.apache.hadoop.fs.webdav.WebdavServer $*
 java -classpath $CP org.apache.hadoop.fs.webdav.WebdavServer $*

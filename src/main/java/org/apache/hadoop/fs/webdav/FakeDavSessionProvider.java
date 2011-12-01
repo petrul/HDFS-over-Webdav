@@ -25,10 +25,13 @@ import org.apache.jackrabbit.webdav.WebdavRequest;
 public class FakeDavSessionProvider implements DavSessionProvider {
 
     public boolean attachSession(WebdavRequest request) throws DavException {
+    	FsDavSession session = new FsDavSession(request.getRemoteUser());
+    	request.setDavSession(session);
         return true;
     }
 
     public void releaseSession(WebdavRequest request) {
+    	request.setDavSession(null);
     }
 
 }

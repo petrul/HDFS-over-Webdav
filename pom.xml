@@ -5,7 +5,7 @@
 
 	<groupId>net.iphonweb.hadoop</groupId>
 	<artifactId>hdfs-over-webdav</artifactId>
-	<version>0.23.0-SNAPSHOT</version>
+	<version>0.23.1-SNAPSHOT</version>
 
 	<name>HDFS over WebDAV</name>
 	<description>Exposing HDFS over WebDAV for client file access.</description>
@@ -22,6 +22,7 @@
 		<url>https://github.com/huyphan/HDFS-over-Webdav</url>
 		<connection>scm:git:git://github.com/petrul/HDFS-over-Webdav.git</connection>
 	</scm>
+	
 	<issueManagement>
 		<system>github</system>
 		<url>https://github.com/petrul/HDFS-over-Webdav/issues</url>
@@ -72,30 +73,41 @@
 
 
 	  <!-- Logging : start -->
-      <dependency>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging</artifactId>
-        <version>1.1.1</version>
-        <exclusions>
-          <exclusion>
-            <groupId>avalon-framework</groupId>
-            <artifactId>avalon-framework</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>logkit</groupId>
-            <artifactId>logkit</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging-api</artifactId>
-        <version>1.1</version>
-      </dependency>
+<!--       <dependency> -->
+<!--         <groupId>commons-logging</groupId> -->
+<!--         <artifactId>commons-logging</artifactId> -->
+<!--         <version>1.1.1</version> -->
+<!--         <exclusions> -->
+<!--           <exclusion> -->
+<!--             <groupId>avalon-framework</groupId> -->
+<!--             <artifactId>avalon-framework</artifactId> -->
+<!--           </exclusion> -->
+<!--           <exclusion> -->
+<!--             <groupId>logkit</groupId> -->
+<!--             <artifactId>logkit</artifactId> -->
+<!--           </exclusion> -->
+<!--           <exclusion> -->
+<!--             <groupId>javax.servlet</groupId> -->
+<!--             <artifactId>servlet-api</artifactId> -->
+<!--           </exclusion> -->
+<!--         </exclusions> -->
+<!--       </dependency> -->
+<!--       <dependency> -->
+<!--         <groupId>commons-logging</groupId> -->
+<!--         <artifactId>commons-logging-api</artifactId> -->
+<!--         <version>1.1</version> -->
+<!--       </dependency> -->
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.6.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.6.4</version>
+		</dependency>
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
@@ -165,6 +177,13 @@
 			<version>4.10</version>
 			<scope>test</scope>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.mortbay.jetty</groupId>
+			<artifactId>jetty-plus</artifactId>
+			<version>6.1.25</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

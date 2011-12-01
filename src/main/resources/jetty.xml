@@ -7,10 +7,11 @@
     <!-- Uncomment these lines if you want check user permission  -->
     <Call name="addUserRealm">
         <Arg>
-<!--             <New class="org.apache.hadoop.fs.webdav.AnythingGoesUserRealm"> -->
-			<New class="org.apache.hadoop.fs.webdav.WebdavHashUserRealm">
-                <Arg>HDFSUserRealm</Arg>
-                <Arg>conf/accounts.properties</Arg>
+			<New class="org.mortbay.jetty.plus.jaas.JAASUserRealm">
+				<Set name="name">hdfs</Set>
+				<Set name="loginModuleName">org.apache.hadoop.fs.webdav.auth.AnythingGoesLoginModule</Set>
+				<Set name="roleCheckPolicy"><New class="org.apache.hadoop.fs.webdav.auth.AnythingGoesRoleCheckPolicy"/></Set>
+				<Set name="callbackHandlerClass">org.apache.hadoop.fs.webdav.auth.AnythingGoesCallbackHandler</Set>
             </New>
         </Arg>
     </Call>

@@ -23,7 +23,7 @@ import org.mortbay.jetty.security.HashUserRealm;
 import java.util.*;
 import java.io.IOException;
 
-
+@Deprecated
 public class WebdavHashUserRealm extends HashUserRealm {
 
     public WebdavHashUserRealm() {

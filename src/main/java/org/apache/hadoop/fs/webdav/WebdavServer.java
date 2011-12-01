@@ -28,6 +28,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
+import org.apache.hadoop.fs.webdav.auth.HdfsJaasConf;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -45,8 +46,8 @@ public class WebdavServer {
     private Server webServer;
 
     public WebdavServer(String bindAddress, int port) throws Exception {
-        LOG.info("Initializing webdav server");
-
+        //LOG.info("Initializing webdav server");
+    	javax.security.auth.login.Configuration.setConfiguration(new HdfsJaasConf());
         webServer = new Server();
         XmlConfiguration configuration = new XmlConfiguration(this.getClass().getClassLoader().getResourceAsStream("jetty.xml"));
         configuration.configure(webServer);
@@ -86,7 +87,7 @@ public class WebdavServer {
         WebdavServlet.setConf(config);
 
         WebdavServer server = new WebdavServer(cmd.getOptionValue("l", DEFAULT_LISTEN_ADDRESS), port);
-        LOG.info("Starting webdav server");
+//        LOG.info("Starting webdav server");
         server.start();
     }
 

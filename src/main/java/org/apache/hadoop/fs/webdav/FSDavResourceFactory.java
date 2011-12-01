@@ -35,41 +35,38 @@ import org.apache.jackrabbit.webdav.simple.ResourceConfig;
 
 public class FSDavResourceFactory implements DavResourceFactory {
 
-    static final Log LOG = LogFactory.getLog(FSDavResourceFactory.class);
+	static final Log LOG = LogFactory.getLog(FSDavResourceFactory.class);
 
-    private final ResourceConfig resourceConfig;
-    private final Configuration conf;
+	private final ResourceConfig resourceConfig;
+	private final Configuration conf;
 
-    public FSDavResourceFactory(ResourceConfig resourceConfig,
-                                Configuration conf) {
-        this.resourceConfig = resourceConfig;
-        this.conf = conf;
-    }
+	public FSDavResourceFactory(ResourceConfig resourceConfig,
+			Configuration conf) {
+		this.resourceConfig = resourceConfig;
+		this.conf = conf;
+	}
 
-    public DavResource createResource(DavResourceLocator locator,
-                                      DavSession session) throws DavException {
+	public DavResource createResource(DavResourceLocator locator,
+			DavSession session) throws DavException {
 
-        try {
-            return new FSDavResource(this, locator, session, resourceConfig, conf);
-        } catch (IOException ex) {
-            throw new DavException(DavServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
-        }
-    }
+		try {
+			return new FSDavResource(this, locator, session, resourceConfig, conf, ((FsDavSession)session).username);
+		} catch (IOException ex) {
+			throw new DavException(DavServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
+		}
+	}
 
-    public DavResource createResource(DavResourceLocator locator,
-                                      DavServletRequest request,
-                                      DavServletResponse response) throws DavException {
+	public DavResource createResource(DavResourceLocator locator,
+			DavServletRequest request, DavServletResponse response)
+			throws DavException {
 
-        try {
-            return new FSDavResource(this,
-                                     locator,
-                                     request.getDavSession(),
-                                     resourceConfig,
-                                     conf,
-                                     DavMethods.isCreateCollectionRequest(request));
-        } catch (IOException ex) {
-            throw new DavException(DavServletResponse.SC_INTERNAL_SERVER_ERROR,
-                                   ex.getMessage());
-        }
-    }
+		try {
+			return new FSDavResource(this, locator, request.getDavSession(),
+					resourceConfig, conf,
+					DavMethods.isCreateCollectionRequest(request), request.getRemoteUser());
+		} catch (IOException ex) {
+			throw new DavException(DavServletResponse.SC_INTERNAL_SERVER_ERROR,
+					ex.getMessage());
+		}
+	}
 }

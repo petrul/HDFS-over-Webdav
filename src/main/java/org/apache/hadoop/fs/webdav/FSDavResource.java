@@ -22,8 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
-import java.security.AccessControlContext;
-import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,6 +36,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.AccessControlException;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.StringUtils;
@@ -101,17 +101,45 @@ public class FSDavResource implements DavResource {
 	 * @see isCollection
 	 */
 	private boolean isCollectionRequest = false;
+	
+	// the dav username as authenticated as dav://user@server 
+	private String username;
+
+//	public FSDavResource(FSDavResourceFactory factory,
+//			DavResourceLocator locator,
+//			DavServletRequest request,
+//			ResourceConfig resourceConfig, Configuration conf,
+//			boolean isCollectionRequest) throws IOException {
 
 	public FSDavResource(FSDavResourceFactory factory,
-			DavResourceLocator locator, DavSession session,
+			DavResourceLocator locator,
+			DavSession session,
 			ResourceConfig resourceConfig, Configuration conf,
-			boolean isCollectionRequest) throws IOException {
+			boolean isCollectionRequest,
+			String username) throws IOException {
 
+		
 		this.factory = factory;
 		this.locator = locator;
 		this.session = session;
 		this.conf = conf;
-		this.fs = FileSystem.get(conf);
+		this.username = username;
+		
+		final Configuration finalConf = this.conf;
+		UserGroupInformation user = this.ugiFromUsername();
+		this.fs = user.doAs(new PrivilegedAction<FileSystem>() {
+
+			@Override
+			public FileSystem run() {
+				try {
+					return FileSystem.get(finalConf);
+				} catch (IOException e) {
+					throw new RuntimeException(e); // FIXME
+				}
+			}
+			
+		});
+		 
 		String pathStr = URLDecoder.decode(locator.getResourcePath(), "UTF-8");
 		if (pathStr.trim().equals("")) { // empty path is not allowed
 			pathStr = "/";
@@ -120,12 +148,21 @@ public class FSDavResource implements DavResource {
 		this.isCollectionRequest = isCollectionRequest;
 	}
 
+	private UserGroupInformation ugiFromUsername() throws IOException {
+//		String strUser = request.getRemoteUser();
+		if (this.username == null || "".equals(this.username.trim()))
+			return UserGroupInformation.getCurrentUser();
+		else
+			return UserGroupInformation.createRemoteUser(this.username);
+	}
+
 	public FSDavResource(FSDavResourceFactory factory,
-			DavResourceLocator locator, DavSession session,
-			ResourceConfig resourceConfig, Configuration conf)
+			DavResourceLocator locator, DavSession session, 
+			ResourceConfig resourceConfig, Configuration conf, String username)
 			throws IOException {
 
-		this(factory, locator, session, resourceConfig, conf, false);
+		//this(factory, locator, req, resourceConfig, conf, false);
+		this(factory, locator, session, resourceConfig, conf, false, username);
 	}
 
 	public String getComplianceClass() {
@@ -146,13 +183,14 @@ public class FSDavResource implements DavResource {
 		// entity of the resource. Properties
 		// defined on the resource may be recomputed during PUT processing but
 		// are not otherwise affected.
-		Path destPath = ((FSDavResource) resource).getPath();
+		final Path destPath = ((FSDavResource) resource).getPath();
 		try {
 			FSDavResource dfsResource = (FSDavResource) resource;
 			if (dfsResource.isCollectionRequest) {
-				LOG.debug("creating new directory : "
-						+ destPath.toUri().getPath());
+				LOG.debug("creating new directory : " + destPath.toUri().getPath());
+				
 				boolean success = fs.mkdirs(destPath);
+				
 				if (!success) {
 					throw new DavException(
 							DavServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -174,9 +212,12 @@ public class FSDavResource implements DavResource {
 					IOUtils.copyBytes(in, out, conf, true);
 				}
 			}
+		} catch (org.apache.hadoop.security.AccessControlException e) {
+			LOG.warn(e.getMessage());
+			throw new DavException(DavServletResponse.SC_UNAUTHORIZED, e);
 		} catch (IOException ex) {
-			LOG.warn(StringUtils.stringifyException(ex));
-			throw new DavException(DavServletResponse.SC_INTERNAL_SERVER_ERROR);
+			LOG.warn(ex, ex);
+			throw new DavException(DavServletResponse.SC_INTERNAL_SERVER_ERROR, ex);
 		}
 	}
 
@@ -254,7 +295,7 @@ public class FSDavResource implements DavResource {
 	}
 
 	public String getDisplayName() {
-		LOG.info("DISPLAY_NAME: " + path.getName());
+		if (LOG.isDebugEnabled()) LOG.debug("DISPLAY_NAME: " + path.getName());
 
 		return path.getName();
 	}
@@ -277,7 +318,7 @@ public class FSDavResource implements DavResource {
 			buffer.insert(0, "/");
 		}
 
-		LOG.info("HREF: " + buffer.toString());
+		if (LOG.isDebugEnabled()) LOG.debug("HREF: " + buffer.toString());
 		return buffer.toString();
 	}
 
@@ -300,7 +341,7 @@ public class FSDavResource implements DavResource {
 			if (statuses != null) {
 				for (FileStatus s : statuses) {
 					Path p = s.getPath();
-					LOG.info("MEMBER: " + p.toString());
+					if (LOG.isDebugEnabled()) LOG.debug("MEMBER: " + p.toString());
 					DavResourceLocator resourceLocator = locator.getFactory()
 							.createResourceLocator(locator.getPrefix(),
 									locator.getWorkspacePath(), p.toString(),
