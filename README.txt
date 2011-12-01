@@ -17,7 +17,7 @@ or
 
 	git clone -b branch-0.23 git://github.com/apache/hadoop-common.git
 
-Build the Hadoop :
+Build Hadoop :
 
 	$ mvn install -Pdist -DskipTests 
 	
@@ -27,6 +27,10 @@ Now you should have hadoop jars in your local .m2 repository.
 Extract the source code and use maven to compile :
 
 	mvn package
+
+and then build the distribution:
+
+	mvn assembly:single
 
 Your distribution is ready in target/hdfs-over-webdav-${version}.tar.bz2
 
