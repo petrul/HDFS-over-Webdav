@@ -2,6 +2,7 @@
 <!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://jetty.mortbay.org/configure.dtd">
 <!-- =============================================================== -->
 <!-- Configure the Jetty Server                                      -->
+<!-- THIS FILE IS OBSOLETE, THE CONFIGURAITON IS DSL'D in Java because of how hard it is to use a relative web.xml -->
 <!-- =============================================================== -->
 <Configure class="org.mortbay.jetty.Server">
     <!-- Uncomment these lines if you want check user permission  -->
@@ -21,7 +22,7 @@
                <New id="DefaultHandler" class="org.mortbay.jetty.webapp.WebAppContext">
                       <Arg>/</Arg>
                       <Arg>/</Arg> 
-                      <Call name="setDescriptor"><Arg>conf/web.xml</Arg></Call> 
+                      <Call name="setDescriptor"><Arg>HDFS-over-Webdav/src/main/resources/WEB-INF/web.xml</Arg></Call>
                       <Call name="setAttribute">
                           <Arg>webAppContext</Arg>
                           <Arg><Ref id="DefaultHandler"/></Arg>

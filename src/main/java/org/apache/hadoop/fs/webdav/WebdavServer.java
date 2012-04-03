@@ -18,27 +18,30 @@
 
 package org.apache.hadoop.fs.webdav;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.webdav.auth.AnythingGoesRoleCheckPolicy;
 import org.apache.hadoop.fs.webdav.auth.HdfsJaasConf;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.xml.XmlConfiguration;
+import org.mortbay.jetty.plus.jaas.JAASUserRealm;
+import org.mortbay.jetty.webapp.WebAppContext;
+
+import java.io.File;
+import java.net.URL;
 
 public class WebdavServer {
 	
 	private static final Log LOG = LogFactory.getLog(WebdavServer.class);
 
-    public static final String WEB_APP_CONTEXT 	= "webAppContext";
+    //public static final String WEB_APP_CONTEXT 	= "webAppContext";
     private static final String DEFAULT_FS_NAME = "hdfs://127.0.0.1:8020";
     private static final String DEFAULT_LISTEN_ADDRESS = "0.0.0.0";
     private static final String DEFAULT_BIND_PORT = "19800";
@@ -46,11 +49,32 @@ public class WebdavServer {
     private Server webServer;
 
     public WebdavServer(String bindAddress, int port) throws Exception {
-        //LOG.info("Initializing webdav server");
     	javax.security.auth.login.Configuration.setConfiguration(new HdfsJaasConf());
         webServer = new Server();
-        XmlConfiguration configuration = new XmlConfiguration(this.getClass().getClassLoader().getResourceAsStream("jetty.xml"));
-        configuration.configure(webServer);
+//        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("jetty.xml");
+//        if (resourceAsStream == null)
+//            throw new IllegalStateException("cannot find classpath:/jetty.xml");
+//        XmlConfiguration configuration = new XmlConfiguration(resourceAsStream);
+//        configuration.configure(webServer);
+
+        JAASUserRealm realm = new JAASUserRealm();
+        realm.setName("hdfs");
+        realm.setLoginModuleName("org.apache.hadoop.fs.webdav.auth.AnythingGoesLoginModule");
+        realm.setRoleCheckPolicy(new AnythingGoesRoleCheckPolicy());
+        realm.setCallbackHandlerClass("org.apache.hadoop.fs.webdav.auth.AnythingGoesCallbackHandler");
+
+        webServer.addUserRealm(realm);
+
+        WebAppContext webappctxt = new WebAppContext("/", "/");
+        URL webxml = this.getClass().getClassLoader().getResource("WEB-INF/web.xml");
+        if (! new File(webxml.getFile()).exists())
+            throw new IllegalStateException(String.format("cannot find web.xml, though it was at %s", webxml));
+        LOG.info("using web.xml at " + webxml);
+        webappctxt.setDescriptor(webxml.getFile());
+        webappctxt.setAttribute("webAppContext", webappctxt);
+
+        webServer.addHandler(webappctxt);
+
 
         Connector connector=new SelectChannelConnector();
         connector.setPort(port);
@@ -81,13 +105,26 @@ public class WebdavServer {
         Configuration config = new Configuration();
         String hdfsUrl = cmd.getOptionValue("fs", DEFAULT_FS_NAME);
         if (hdfsUrl != null) {
-        	LOG.info("will connect to " + hdfsUrl);
+
             config.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY, hdfsUrl);
+        }
+        {
+            LOG.info(hdfsUrl);
+            FileSystem fs = FileSystem.get(config);
+            //fs instanceof
+            FileStatus[] res = fs.listStatus(new Path("/"));
+            for (FileStatus f: res) {
+                LOG.info("" + f.getPath());
+            }
+            LOG.info("the fs is " + fs + res);
         }
         WebdavServlet.setConf(config);
 
-        WebdavServer server = new WebdavServer(cmd.getOptionValue("l", DEFAULT_LISTEN_ADDRESS), port);
-//        LOG.info("Starting webdav server");
+        String listenAddress = cmd.getOptionValue("l", DEFAULT_LISTEN_ADDRESS);
+        WebdavServer server = new WebdavServer(listenAddress, port);
+
+        LOG.info(String.format("will export %s at dav://%s:%d", hdfsUrl, listenAddress, port));
+
         server.start();
     }
 

@@ -18,36 +18,23 @@
 
 package org.apache.hadoop.fs.webdav;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Enumeration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.AccessControlException;
+import org.apache.jackrabbit.webdav.*;
+import org.apache.jackrabbit.webdav.server.AbstractWebdavServlet;
+import org.apache.jackrabbit.webdav.simple.LocatorFactoryImpl;
+import org.apache.jackrabbit.webdav.simple.ResourceConfig;
+import org.apache.jackrabbit.webdav.simple.ResourceFactoryImpl;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.AccessControlException;
-import org.apache.jackrabbit.webdav.DavException;
-import org.apache.jackrabbit.webdav.DavLocatorFactory;
-import org.apache.jackrabbit.webdav.DavMethods;
-import org.apache.jackrabbit.webdav.DavResource;
-import org.apache.jackrabbit.webdav.DavResourceFactory;
-import org.apache.jackrabbit.webdav.DavServletResponse;
-import org.apache.jackrabbit.webdav.DavSessionProvider;
-import org.apache.jackrabbit.webdav.MultiStatus;
-import org.apache.jackrabbit.webdav.MultiStatusResponse;
-import org.apache.jackrabbit.webdav.WebdavRequest;
-import org.apache.jackrabbit.webdav.WebdavRequestImpl;
-import org.apache.jackrabbit.webdav.WebdavResponse;
-import org.apache.jackrabbit.webdav.WebdavResponseImpl;
-import org.apache.jackrabbit.webdav.server.AbstractWebdavServlet;
-import org.apache.jackrabbit.webdav.simple.LocatorFactoryImpl;
-import org.apache.jackrabbit.webdav.simple.ResourceConfig;
-import org.apache.jackrabbit.webdav.simple.ResourceFactoryImpl;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Enumeration;
 
 
 public class WebdavServlet extends AbstractWebdavServlet {
@@ -118,7 +105,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
      */
     private ResourceConfig config;
 
-    private static Configuration hadoopConfig = new Configuration();
+    private static Configuration hadoopConfig = null;//new Configuration();
 
 
 //    private static String currentUserName;
@@ -130,6 +117,7 @@ public class WebdavServlet extends AbstractWebdavServlet {
      */
     @Override
     public void init() throws ServletException {
+        LOG.info("*** servlet initializing");
         super.init();
         resourcePathPrefix = getInitParameter(INIT_PARAM_RESOURCE_PATH_PREFIX);
         if (resourcePathPrefix == null) {
@@ -360,7 +348,6 @@ public class WebdavServlet extends AbstractWebdavServlet {
 
     protected void service(HttpServletRequest request,
                            HttpServletResponse response) throws ServletException, IOException {
-
         WebdavRequest webdavRequest = new WebdavRequestImpl(request, getLocatorFactory());
         // DeltaV requires 'Cache-Control' header for all methods except 'VERSION-CONTROL' and 'REPORT'.
         int methodCode = DavMethods.getMethodCode(request.getMethod());

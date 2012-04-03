@@ -9,7 +9,7 @@ BIN_DIR=`cd "$BIN_DIR"; pwd`
 
 
 # add libs to CLASSPATH
-CP=""
+CP="$BIN_DIR/../conf:"
 for FILE in $BIN_DIR/../*.jar; do
     CP=${CP}:$FILE;
 done
