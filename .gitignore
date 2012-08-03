@@ -1,5 +1,12 @@
-.classpath
-.project
-.settings
+*/target/**
+*/.project
+*/.classpath
+*/.settings
+*/.cache
+#*/.DS_Store*
+#**/.DS_Store*
+**/*.iml
+**/.idea
+.idea
 target
-*~
+.DS_Store
